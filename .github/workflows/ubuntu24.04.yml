@@ -1,14 +1,11 @@
-# filepath: .github/workflows/ci.yml
-name: CI
+# filepath: .github/workflows/ubuntu24.04.yml
+name: ubuntu24.04
 
 on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: ubuntu-${{ matrix.version }}
-    strategy:
-      matrix:
-        version: [22.04, 24.04, latest]
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies

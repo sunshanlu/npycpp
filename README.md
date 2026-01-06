@@ -9,8 +9,8 @@
   <img alt="GitHub Release" src="https://img.shields.io/github/v/release/sunshanlu/npycpp">
   <img alt="GitHub Repo License" src="https://img.shields.io/github/license/sunshanlu/npycpp">
   <img alt="GitHub Repo Issues" src="https://img.shields.io/github/issues/sunshanlu/npycpp">
-  <img alt="Build Status" src="https://github.com/sunshanlu/npycpp/workflows/CI/badge.svg">
-  <img alt="Tests" src="https://github.com/sunshanlu/npycpp/workflows/CI/badge.svg">
+  <img alt="Build Status" src="https://github.com/sunshanlu/npycpp/workflows/ubuntu22.04/badge.svg">
+  <img alt="Build Status" src="https://github.com/sunshanlu/npycpp/workflows/ubuntu24.04/badge.svg">
 </p>
 
 <p align="center">
