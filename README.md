@@ -10,6 +10,7 @@
   <img alt="GitHub Repo License" src="https://img.shields.io/github/license/sunshanlu/npycpp">
   <img alt="GitHub Repo Issues" src="https://img.shields.io/github/issues/sunshanlu/npycpp">
   <img alt="Build Status" src="https://github.com/sunshanlu/npycpp/workflows/CI/badge.svg">
+  <img alt="Tests" src="https://github.com/sunshanlu/npycpp/workflows/CI/badge.svg">
 </p>
 
 <p align="center">
