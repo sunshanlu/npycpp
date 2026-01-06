@@ -47,3 +47,6 @@
 /install
 /bin
 /lib
+
+*.npy
+*.npz

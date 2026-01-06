@@ -36,14 +36,14 @@ protected:
 
 	void CreateTestNpzFile() {
 		// 使用 NpzWriter 创建测试文件
-		NpzWriter writer(test_npz_path, NpzWriter::Mode::W);
+		NpzWriter writer(test_npz_path, WriteMode::W);
 
 		// 准备测试数据
 		const std::vector<float> data1 = {1.0f, 2.0f, 3.0f, 4.0f};
 		const std::vector<int> data2 = {10, 20, 30};
 
-		const std::vector<size_t> shape1 = {2, 2};
-		const std::vector<size_t> shape2 = {3};
+		const std::vector<int64_t> shape1 = {2, 2};
+		const std::vector<int64_t> shape2 = {3};
 
 		writer.AddNpyData<float>("array1", data1.data(), shape1);
 		writer.AddNpyData<int>("array2", data2.data(), shape2);
@@ -108,11 +108,10 @@ TEST_F(NpzReaderTest, ReadWriteIntegration) {
 
 	// 写入数据
 	{
-		NpzWriter writer(test_write_path, NpzWriter::Mode::W);
-		std::vector<double> write_data = {1.1, 2.2, 3.3, 4.4, 5.5};
-		std::vector<size_t> shape = {5};
+		NpzWriter writer(test_write_path, WriteMode::W);
+		std::vector write_data = {1.1, 2.2, 3.3, 4.4, 5.5};
+		std::vector<int64_t> shape = {5};
 		writer.AddNpyData<double>("test_array", write_data.data(), shape);
-		writer.Close();
 	}
 
 	// 读取数据
@@ -121,7 +120,7 @@ TEST_F(NpzReaderTest, ReadWriteIntegration) {
 		NpData data = reader.Load("test_array");
 
 		EXPECT_EQ(data.Elements(), 5);
-		EXPECT_EQ(data.NumBytes(), 40); // 5 * sizeof(double)
+		EXPECT_EQ(data.NumBytes(), 40);
 
 		const double *read_data = data.Ptr<double>();
 		const std::vector expected = {1.1, 2.2, 3.3, 4.4, 5.5};
@@ -140,9 +139,9 @@ TEST_F(NpzReaderTest, EdgeCases) {
 
 	// 测试空数组
 	const std::string edge_test_path = "edge_test.npz"; {
-		NpzWriter writer(edge_test_path, NpzWriter::Mode::W);
+		NpzWriter writer(edge_test_path, WriteMode::W);
 		constexpr std::vector<float> empty_data;
-		const std::vector<size_t> empty_shape = {0};
+		const std::vector<int64_t> empty_shape = {0};
 		writer.AddNpyData("empty_array", empty_data.data(), empty_shape);
 		writer.Close();
 	}
@@ -167,9 +166,9 @@ TEST_F(NpzReaderTest, OneDimensionalArray) {
 
 	// clang-format off
 	{
-		NpzWriter writer(test_1d_path, NpzWriter::Mode::W);
+		NpzWriter writer(test_1d_path, WriteMode::W);
 		std::vector<int> data = {1, 2, 3, 4, 5, 6};
-		std::vector<size_t> shape = {6};
+		std::vector<int64_t> shape = {6};
 		writer.AddNpyData("oned_array", data.data(), shape);
 		writer.Close();
 	}

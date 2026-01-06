@@ -14,7 +14,7 @@
 
 <p align="center">
   English |
-  <a href="./README_CN.md">中文</a> |
+  <a href="./README_CN.md">中文</a>
 </p>
 
 # npycpp - C++ Library for Reading and Writing NumPy File Formats
@@ -42,35 +42,6 @@
 - **`OpenCV` Integration**: Native support for `cv::Mat` data type conversion (supports zero-copy)
 - **`Eigen` Integration**: Seamless integration with `Eigen::Matrix` matrix computation library (supports zero-copy)
 - **Standard Library Compatibility**: Perfectly supports `STL` container types, using pointers to create `STL` containers (but will generate copies)
-
-## Project Structure
-
-```bash
-npycpp
-├── CMakeLists.txt                         # Project build configuration file
-├── Config.cmake.in                        # CMake package configuration template
-├── examples                               # Example code directory
-│   ├── CMakeLists.txt                     # Example build configuration
-│   ├── NpycppExamples.cc                  # C++ usage examples
-│   ├── res                                # Example resource directory
-│   └── scripts                            # Script files directory
-│       └── NpypyExamples.py               # Python interaction example script
-├── include                                # Header files directory
-│   └── npycpp                             # Library header files
-│       ├── NpData.hpp                     # Data container definition
-│       ├── NpzReader.hpp                  # NPZ reader definition
-│       └── NpzWriter.hpp                  # NPZ writer definition
-├── README.md                              # Project documentation
-├── src                                    # Source files directory
-│   ├── NpData.cc                          # Data container implementation
-│   ├── NpzReader.cc                       # NPZ reader implementation
-│   └── NpzWriter.cc                       # NPZ writer implementation
-└── test                                   # Test code directory
-    ├── CMakeLists.txt                     # Test build configuration
-    ├── NpDataTest.cc                      # Data container tests
-    ├── NpzReaderTest.cc                   # NPZ reader tests
-    └── NpzWriterTest.cc                   # NPZ writer tests
-```
 
 ## Quick Start
 
@@ -117,44 +88,99 @@ target_link_libraries(<your_target> npycpp::npycpp)
 
 ### Basic Usage Examples
 
-#### Basic Data Read/Write
+#### NpzReader/NpzWriter Exapmples
 
-```cpp
-#include <npycpp/NpzWriter.hpp>
-#include <npycpp/NpzReader.hpp>
+```c++
+#include <cstdint>
+#include <vector>
+
+#include <npycpp/npycpp.hpp>
 
 // Write data
-std::vector<float> data = {1.0f, 2.0f, 3.0f, 4.0f};
-std::vector<size_t> shape = {2, 2};
+std::vector<float> data_float = {1.0f, 2.0f, 3.0f, 4.0f};
+std::vector<int> data_int = {1, 2, 3, 4};
+std::vector<int64_t> shape_float = {2, 2};
+std::vector<int64_t> shape_int = {2, 2, 1};
 
 // Before using npz files, the writer must be closed to ensure file format integrity
 // Method 1: Use RAII to ensure file is properly closed
 {
-    npy::NpzWriter writer("output.npz", npy::NpzWriter::Mode::W);
-    writer.AddNpyData("array0", data.data(), shape);
+
+  npy::NpzWriter writer("output.npz", npy::WriteMode::W);
+  writer.AddNpyData("array_float", data_float.data(), shape_float);
 }
 
 // Method 2: Directly call Close() function
-npy::NpzWriter writer("output.npz", npy::NpzWriter::Mode::A);
-writer.AddNpyData("array1", data.data(), shape);
+npy::NpzWriter writer("output.npz", npy::WriteMode::A);
+writer.AddNpyData("array_int", data_int.data(), shape_int);
 writer.Close();
 
 // Read data and use
 npy::NpzReader reader("output.npz");
-npy::NpData npd = reader["array0"];
+npy::NpData npd = reader["array_float"];
 
-const float* ptr = npd.Ptr<float>();
+// Access data
+const float *ptr = npd.Ptr<float>();
 ```
 
-#### Framework Interoperability
+#### NpyReader/NpyWriter Examples
 
-```cpp
+```c++
+#include <cstdint>
+#include <vector>
+
+#include <npycpp/npycpp.hpp>
+
+// Writing NPY file using NpyWriter
+std::vector<double> data = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
+std::vector<int64_t> shape = {2, 3};
+npy::NpyWriter writer("matrix.npy");
+writer.SaveNpyData(data.data(), shape);
+writer.Close();
+
+// Reading NPY file using NpyReader
+npy::NpyReader reader("matrix.npy");
+npy::NpData npd = reader.Load();
+
+// Access data
+const double *loaded_data = npd.Ptr<double>();
+```
+
+#### Data Container Examples
+
+```c++
+#include <cstdint>
+#include <vector>
+
+#include <npycpp/npycpp.hpp>
+#include <fmt/format.h>
+
+npy::NpData npd_data = npy::NpyReader("matrix.npy").Load();
+
+// Print array shape
+fmt::print("Array shape: [{}]\n", fmt::join(npd_data.Shape(), ", "));
+
+// access data
+const double *npd_data_ptr = npd_data.Ptr<double>();
+for (int i = 0; i < npd_data.Elements(); ++i)
+  fmt::print("{:>5.2f} ", npd_data_ptr[i]);
+
+fmt::print("\n");
+
 // OpenCV Integration
-cv::Mat npd_cv = npd.CVMat<float>();              // Copy construction
-cv::Mat npd_cv_view = npd.CVMatZC<float>();       // Zero-copy view
-// Eigen Integration  
-auto npd_eigen = npd.EigenMatrix<float>();        // Copy construction
-auto npd_eigen_map = npd.EigenMatrixZC<float>();  // Zero-copy mapping
+cv::Mat npd_cv = npd_data.CVMat<double>();        // Copy construction
+cv::Mat npd_cv_view = npd_data.CVMatZC<double>(); // Zero-copy view
+
+// Eigen Integration
+auto npd_eigen = npd_data.EigenMatrix<double>();       // Copy construction
+auto npd_eigen_map = npd_data.EigenMatrixZC<double>(); // Zero-copy mapping
+
+// STL Integration (Copy construction)
+std::vector<double> npd_stl(npd_data.Ptr<double>(), npd_data.Ptr<double>() + npd_data.Elements());
+
+fmt::print("STL Wrapper: [{}]", fmt::join(npd_stl, ", "));
+std::cout << "Eigen map Wrapper: \n" << npd_eigen_map << std::endl;
+std::cout << "CV View Wrapper: \n" << npd_cv_view << std::endl;
 ```
 
 ## Testing and Validation
@@ -162,8 +188,10 @@ auto npd_eigen_map = npd.EigenMatrixZC<float>();  // Zero-copy mapping
 The project includes comprehensive unit tests:
 
 - **[NpDataTest](test/NpDataTest.cc)**: Tests data container functionality
-- **[NpzReaderTest](test/NpzReaderTest.cc)**: Tests read functionality
-- **[NpzWriterTest](test/NpzWriterTest.cc)**: Tests write functionality
+- **[NpzReaderTest](test/NpzReaderTest.cc)**: Tests npz file read functionality
+- **[NpzWriterTest](test/NpzWriterTest.cc)**: Tests npz file write functionality
+- **[NpyReaderTest](test/NpyReaderTest.cc)**: Tests npy file read functionality
+- **[NpyWriterTest](test/NpyWriterTest.cc)**: Tests npy file write functionality
 
 Run tests:
 
@@ -173,10 +201,11 @@ ctest --verbose
 
 ## Example Files
 
-The project's [example folder](examples) contains a [`Python` example script](examples/scripts/NpypyExamples.py) and a [`C++` example source file](examples/NpycppExamples.cc), demonstrating data exchange between `C++` and `Python`.
+The project's [example folder](examples) contains a `Python` example scripts and a `C++` example source files for npy and npz file writing and reading, demonstrating data exchange between `C++` and `Python`.
 
 ```bash
-./bin/npycpp_example
+./bin/npycpp_example # npy file example
+./bin/npzcpp_example # npz file example
 ```
 
 ## License

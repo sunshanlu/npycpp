@@ -1,6 +1,9 @@
 /**
- * Created by ssl on 2026/1/1.
- * Copyright (c) 2026 ssl. All rights reserved.
+ * @file NpData.hpp
+ * @brief NumPy数据结构的C++封装类，支持与OpenCV和Eigen的互操作。
+ * @author ssl
+ * @date 2026/1/1
+ * @copyright (c) 2026 ssl. All rights reserved.
  */
 
 #pragma once
@@ -12,63 +15,163 @@
 #include <Eigen/Dense>
 #include <spdlog/spdlog.h>
 
-
 namespace npy {
+/**
+ * @brief NumPy数据结构的C++封装类。
+ *
+ * 该类封装了NumPy数组的数据，支持与OpenCV的cv::Mat和Eigen矩阵的零拷贝或拷贝转换。
+ */
 class NpData {
 public:
+	/**
+	 * @brief 行主序矩阵类型别名。
+	 * @tparam T 数据类型。
+	 */
 	template<typename T>
 	using RowMajorMatrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
+	/**
+	 * @brief 默认构造函数。
+	 */
 	NpData();
 
+	/**
+	 * @brief 构造函数，根据形状、字大小和顺序初始化数据。
+	 * @param shape 数据形状。
+	 * @param word_size 每个元素的字节大小。
+	 * @param fortran_order 是否为Fortran顺序。
+	 */
 	NpData(const std::vector<int64_t> &shape, const size_t &word_size, const bool &fortran_order);
 
+	/**
+	 * @brief 移动构造函数。
+	 * @param rhs 要移动的NpData对象。
+	 */
 	NpData(NpData &&rhs) noexcept;
 
+	/**
+	 * @brief 拷贝构造函数。
+	 * @param rhs 要拷贝的NpData对象。
+	 */
 	NpData(const NpData &rhs);
 
+	/**
+	 * @brief 获取数据指针。
+	 * @tparam T 数据类型。
+	 * @return 指向数据的指针。
+	 */
 	template<typename T>
 	T *Ptr() { return reinterpret_cast<T *>(data_); }
 
+	/**
+	 * @brief 获取常量数据指针。
+	 * @tparam T 数据类型。
+	 * @return 指向常量的指针。
+	 */
 	template<typename T>
 	const T *Ptr() const { return reinterpret_cast<const T *>(data_); }
 
+	/**
+	 * @brief 转换为OpenCV的cv::Mat（拷贝）。
+	 * @tparam T 数据类型。
+	 * @return cv::Mat对象。
+	 */
 	template<typename T>
 	cv::Mat CVMat();
 
+	/**
+	 * @brief 转换为OpenCV的cv::Mat（常量拷贝）。
+	 * @tparam T 数据类型。
+	 * @return cv::Mat对象。
+	 */
 	template<typename T>
 	cv::Mat CVMat() const { return const_cast<NpData *>(this)->CVMat<T>(); }
 
+	/**
+	 * @brief 转换为Eigen矩阵（拷贝）。
+	 * @tparam T 数据类型。
+	 * @return Eigen矩阵。
+	 */
 	template<typename T>
 	RowMajorMatrix<T> EigenMatrix();
 
+	/**
+	 * @brief 转换为Eigen矩阵（常量拷贝）。
+	 * @tparam T 数据类型。
+	 * @return Eigen矩阵。
+	 */
 	template<typename T>
 	RowMajorMatrix<T> EigenMatrix() const { return const_cast<NpData *>(this)->EigenMatrix<T>(); }
 
+	/**
+	 * @brief 零拷贝转换为OpenCV的cv::Mat。
+	 * @tparam T 数据类型。
+	 * @return cv::Mat对象。
+	 */
 	template<typename T>
 	cv::Mat CVMatZC();
 
+	/**
+	 * @brief 零拷贝转换为OpenCV的cv::Mat（常量）。
+	 * @tparam T 数据类型。
+	 * @return cv::Mat对象。
+	 */
 	template<typename T>
 	const cv::Mat CVMatZC() const { return const_cast<NpData *>(this)->CVMatZC<T>(); }
 
+	/**
+	 * @brief 零拷贝转换为Eigen矩阵映射。
+	 * @tparam T 数据类型。
+	 * @return Eigen矩阵映射。
+	 */
 	template<typename T>
 	Eigen::Map<RowMajorMatrix<T> > EigenMatrixZC();
 
+	/**
+	 * @brief 零拷贝转换为常量Eigen矩阵映射。
+	 * @tparam T 数据类型。
+	 * @return 常量Eigen矩阵映射。
+	 */
 	template<typename T>
 	Eigen::Map<const RowMajorMatrix<T>> EigenMatrixZC() const;
 
+	/**
+	 * @brief 获取元素总数。
+	 * @return 元素数量。
+	 */
 	std::size_t Elements() const;
 
+	/**
+	 * @brief 获取总字节数。
+	 * @return 字节数。
+	 */
 	std::size_t NumBytes() const;
 
+	/**
+	 * @brief 获取数据形状。
+	 * @return 形状向量。
+	 */
 	std::vector<int64_t> Shape() const;
 
+	/**
+	 * @brief 析构函数。
+	 */
 	~NpData();
 
 private:
+	/**
+	 * @brief 检查模板类型和形状的有效性。
+	 * @tparam T 数据类型。
+	 * @param shape_limit 形状维度限制。
+	 */
 	template<typename T>
 	void Check(const std::size_t &shape_limit) const;
 
+	/**
+	 * @brief 根据数据类型推断OpenCV类型。
+	 * @tparam T 数据类型。
+	 * @return OpenCV类型。
+	 */
 	template<typename T>
 	int InferCVType() {
 		if constexpr (std::is_same_v<T, float>)
@@ -95,10 +198,10 @@ private:
 		throw std::runtime_error("unsupported data type for cv::Mat conversion");
 	}
 
-	char *data_ = nullptr;
-	std::vector<int64_t> shape_;
-	size_t word_size_;
-	bool fortran_order_;
+	char *data_ = nullptr;       /**< 数据指针。 */
+	std::vector<int64_t> shape_; /**< 数据形状。 */
+	size_t word_size_;           /**< 每个元素的字节大小。 */
+	bool fortran_order_;         /**< 是否为Fortran顺序。 */
 };
 
 template<typename T>

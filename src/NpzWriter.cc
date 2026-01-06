@@ -1,45 +1,22 @@
 #include "npycpp/NpzWriter.hpp"
 
 namespace npy {
-NpzWriter::NpzWriter(const std::string &npz_path, Mode mode) {
-	if (npz_path.empty()) {
-		SPDLOG_WARN("npz_path is empty");
-		path_invalid = false;
-		return;
-	}
+NpzWriter::NpzWriter(const std::string &npz_path, WriteMode mode)
+	: AbsWriter(npz_path, mode) {
+	if (path_invalid_)
+		throw std::runtime_error("input npz path is invalid");
 
-	namespace fs = std::filesystem;
+	if (mode == WriteMode::A)
+		SparseNpzFooter();
+}
 
-	try {
-		const fs::path npz_path_abs = fs::absolute(npz_path);
-		const fs::path dir_path = npz_path_abs.parent_path();
-		if (!fs::exists(dir_path)) {
-			fs::create_directories(dir_path);
-
-			if (mode == Mode::A) {
-				SPDLOG_WARN("there is no npz_path, mode is changed to W");
-				mode = Mode::W;
-			}
-		}
-
-		switch (mode) {
-			case Mode::W:
-				file_.open(npz_path_abs, std::ios::out | std::ios::binary);
-				break;
-			case Mode::A:
-				file_.open(npz_path_abs, std::ios::out | std::ios::in | std::ios::binary);
-				SparseNpzFooter();
-				break;
-		}
-	} catch (const fs::filesystem_error &) {
-		path_invalid = false;
-		SPDLOG_WARN("input file is invalid, please check it");
-		return;
-	}
+NpzWriter::~NpzWriter() {
+	if (!is_closed_)
+		Close();
 }
 
 const char *NpzWriter::Close() {
-	if (!path_invalid) {
+	if (path_invalid_) {
 		is_closed_ = true;
 		return "input npz path is invalid";
 	}
@@ -53,20 +30,21 @@ const char *NpzWriter::Close() {
 	return nullptr;
 }
 
-std::string NpzWriter::BuildLocalHeader(const std::string &fname, const uint32_t &crc, const int &nbytes) {
+std::string NpzWriter::BuildLocalHeader(const std::string &fname, const uint32_t &crc
+                                        , const int &nbytes) {
 	std::string local_header;
-	local_header += "PK";                                              //< first part of sig
-	local_header += CastToString(static_cast<uint16_t>(0x0403));       //< second part of sig
-	local_header += CastToString(static_cast<uint16_t>(20));           //< version needed to extract 压缩版本
-	local_header += CastToString(static_cast<uint16_t>(0));            //< general purpose bit flag
-	local_header += CastToString(static_cast<uint16_t>(0));            //< compress method 压缩方法
-	local_header += CastToString(static_cast<uint16_t>(0));            //< file last mod time 文件最后修改时间
-	local_header += CastToString(static_cast<uint16_t>(0));            //< file last mod date 文件最后修改日期
-	local_header += CastToString(crc);                                 //< crc32数据密钥
-	local_header += CastToString(static_cast<uint32_t>(nbytes));       //< compressed size 压缩大小
-	local_header += CastToString(static_cast<uint32_t>(nbytes));       //< uncompressed size 解压缩大小
+	local_header += "PK"; //< first part of sig
+	local_header += CastToString(static_cast<uint16_t>(0x0403)); //< second part of sig
+	local_header += CastToString(static_cast<uint16_t>(20)); //< version needed to extract 压缩版本
+	local_header += CastToString(static_cast<uint16_t>(0)); //< general purpose bit flag
+	local_header += CastToString(static_cast<uint16_t>(0)); //< compress method 压缩方法
+	local_header += CastToString(static_cast<uint16_t>(0)); //< file last mod time 文件最后修改时间
+	local_header += CastToString(static_cast<uint16_t>(0)); //< file last mod date 文件最后修改日期
+	local_header += CastToString(crc); //< crc32数据密钥
+	local_header += CastToString(static_cast<uint32_t>(nbytes)); //< compressed size 压缩大小
+	local_header += CastToString(static_cast<uint32_t>(nbytes)); //< uncompressed size 解压缩大小
 	local_header += CastToString(static_cast<uint16_t>(fname.size())); //< fname的名字长度
-	local_header += CastToString(static_cast<uint16_t>(0));            //< extra field 额外的保存内容
+	local_header += CastToString(static_cast<uint16_t>(0)); //< extra field 额外的保存内容
 	local_header += fname;
 
 	return local_header;
@@ -99,37 +77,6 @@ std::string NpzWriter::BuildFooter() {
 	res += CastToString(static_cast<uint16_t>(0));
 
 	return res;
-}
-
-char NpzWriter::BigEndianTest() {
-	int x = 1;
-	return (reinterpret_cast<char *>(&x)[0]) ? '<' : '>';
-}
-
-char NpzWriter::MapType(const std::type_info &t) {
-	if (t == typeid(float)) return 'f';
-	if (t == typeid(double)) return 'f';
-	if (t == typeid(long double)) return 'f';
-
-	if (t == typeid(int)) return 'i';
-	if (t == typeid(char)) return 'i';
-	if (t == typeid(short)) return 'i';
-	if (t == typeid(long)) return 'i';
-	if (t == typeid(long long)) return 'i';
-
-	if (t == typeid(unsigned char)) return 'u';
-	if (t == typeid(unsigned short)) return 'u';
-	if (t == typeid(unsigned long)) return 'u';
-	if (t == typeid(unsigned long long)) return 'u';
-	if (t == typeid(unsigned int)) return 'u';
-
-	if (t == typeid(bool)) return 'b';
-
-	if (t == typeid(std::complex<float>)) return 'c';
-	if (t == typeid(std::complex<double>)) return 'c';
-	if (t == typeid(std::complex<long double>)) return 'c';
-
-	else return '?';
 }
 
 const char *NpzWriter::SparseNpzFooter() {
