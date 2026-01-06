@@ -140,7 +140,7 @@ TEST_F(NpzReaderTest, EdgeCases) {
 	// 测试空数组
 	const std::string edge_test_path = "edge_test.npz"; {
 		NpzWriter writer(edge_test_path, WriteMode::W);
-		constexpr std::vector<float> empty_data;
+		const std::vector<float> empty_data;
 		const std::vector<int64_t> empty_shape = {0};
 		writer.AddNpyData("empty_array", empty_data.data(), empty_shape);
 		writer.Close();

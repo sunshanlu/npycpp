@@ -171,7 +171,7 @@ TEST_F(NpzWriterTest, AppendMode) {
 // 测试空数组
 TEST_F(NpzWriterTest, WriteEmptyArray) { {
 		NpzWriter writer(test_file_path, WriteMode::W);
-		constexpr std::vector<float> empty_data;
+		const std::vector<float> empty_data;
 		const std::vector<int64_t> empty_shape = {0};
 
 		writer.AddNpyData("empty_array", empty_data.data(), empty_shape);
