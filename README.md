@@ -7,9 +7,9 @@
 
 <p align="center">
   <img alt="GitHub Release" src="https://img.shields.io/github/v/release/sunshanlu/npycpp">
-  <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/sunshanlu/npycpp/total">
   <img alt="GitHub Repo License" src="https://img.shields.io/github/license/sunshanlu/npycpp">
   <img alt="GitHub Repo Issues" src="https://img.shields.io/github/issues/sunshanlu/npycpp">
+  <img alt="Build Status" src="https://github.com/sunshanlu/npycpp/workflows/CI/badge.svg">
 </p>
 
 <p align="center">

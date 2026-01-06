@@ -1,0 +1,26 @@
+# filepath: .github/workflows/ci.yml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-${{ matrix.version }}
+    strategy:
+      matrix:
+        version: [20.04, 22.04, 24.04, latest]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libopencv-dev libeigen3-dev zlib1g-dev libspdlog-dev cmake
+      - name: Build
+        run: |
+          mkdir build && cd build
+          cmake -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release ..
+          make -j$(nproc)
+      - name: Test
+        run: |
+          cd build
+          ctest --verbose
